@@ -423,9 +423,17 @@ function hideLoading() {
   document.getElementById('loading-overlay').classList.add('hidden');
 }
 
+// ===== TOKEN =====
+function getToken() { return localStorage.getItem('af_token'); }
+function setToken(token) { localStorage.setItem('af_token', token); }
+function clearToken() { localStorage.removeItem('af_token'); }
+
 // ===== API =====
 async function api(method, path, body = null) {
-  const opts = { method, headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin' };
+  const headers = { 'Content-Type': 'application/json' };
+  const token = getToken();
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  const opts = { method, headers };
   if (body) opts.body = JSON.stringify(body);
   const res = await fetch(path, opts);
   const data = await res.json();
@@ -435,10 +443,13 @@ async function api(method, path, body = null) {
 
 // ===== AUTH =====
 async function checkAuth() {
+  const token = getToken();
+  if (!token) { currentUser = null; return false; }
   try {
     const { user } = await api('GET', '/api/auth/me');
     if (user) { currentUser = user; updateUserUI(); return true; }
   } catch {}
+  clearToken();
   currentUser = null;
   return false;
 }
@@ -455,7 +466,8 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   try {
     showLoading('Signing in...');
-    await api('POST', '/api/auth/login', { email: document.getElementById('login-email').value, password: document.getElementById('login-password').value });
+    const data = await api('POST', '/api/auth/login', { email: document.getElementById('login-email').value, password: document.getElementById('login-password').value });
+    if (data.access_token) setToken(data.access_token);
     await checkAuth();
     hideLoading();
     toast('Welcome back!', 'success');
@@ -467,7 +479,10 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
   e.preventDefault();
   try {
     showLoading('Creating account...');
-    await api('POST', '/api/auth/register', { name: document.getElementById('reg-name').value, email: document.getElementById('reg-email').value, password: document.getElementById('reg-password').value });
+    const data = await api('POST', '/api/auth/register', { name: document.getElementById('reg-name').value, email: document.getElementById('reg-email').value, password: document.getElementById('reg-password').value });
+    // Auto-login after register
+    const loginData = await api('POST', '/api/auth/login', { email: document.getElementById('reg-email').value, password: document.getElementById('reg-password').value });
+    if (loginData.access_token) setToken(loginData.access_token);
     await checkAuth();
     hideLoading();
     toast('Account created!', 'success');
@@ -476,7 +491,8 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
 });
 
 async function logout() {
-  await api('POST', '/api/auth/logout');
+  try { await api('POST', '/api/auth/logout'); } catch {}
+  clearToken();
   currentUser = null;
   navigate('login');
 }
