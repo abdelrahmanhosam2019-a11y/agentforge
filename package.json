@@ -2,7 +2,7 @@
   "name": "agentforge",
   "version": "1.0.0",
   "description": "AI-Powered Competitive Intelligence Platform",
-  "main": "server.js",
+  "main": "api/index.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js"
