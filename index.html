@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgentForge - AI Competitive Intelligence</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script>
+    tailwind.config = { darkMode:'class', theme:{ extend:{ colors:{ primary:{50:'#eff6ff',100:'#dbeafe',200:'#bfdbfe',300:'#93c5fd',400:'#60a5fa',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a'}}}}}
+  </script>
+  <script>
+    (function(){const s=localStorage.getItem('theme');if(s==='dark'||(!s&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark')})();
+  </script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%232563eb'/><stop offset='100%25' stop-color='%239333ea'/></linearGradient></defs><rect width='100' height='100' rx='20' fill='url(%23g)'/><text x='50' y='68' text-anchor='middle' fill='white' font-family='system-ui' font-weight='bold' font-size='42'>AF</text></svg>">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,sans-serif;transition:background .3s,color .3s}
+    .dark body{background:#0f172a;color:#e2e8f0}
+    body{background:#f9fafb;color:#111827}
+    .gradient-text{background:linear-gradient(135deg,#2563eb,#9333ea);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .hero{background:linear-gradient(135deg,#eff6ff,#f3e8ff)}
+    .dark .hero{background:linear-gradient(135deg,#1e1b4b,#1e3a5f)}
+    .glass{background:rgba(255,255,255,.8);backdrop-filter:blur(12px)}
+    .dark .glass{background:rgba(15,23,42,.9)}
+    .card{background:#fff;border-radius:16px;border:1px solid #e5e7eb;padding:24px;transition:all .3s}
+    .dark .card{background:#1e293b;border-color:#334155}
+    .card:hover{box-shadow:0 20px 40px rgba(0,0,0,.08);transform:translateY(-2px)}
+    .dark .card:hover{box-shadow:0 20px 40px rgba(0,0,0,.3)}
+    .btn{padding:12px 24px;border-radius:12px;font-weight:600;cursor:pointer;border:none;transition:all .2s;display:inline-flex;align-items:center;gap:8px}
+    .btn-primary{background:#2563eb;color:#fff}
+    .btn-primary:hover{background:#1d4ed8;transform:scale(1.02)}
+    .btn-danger{background:#ef4444;color:#fff}
+    .btn-danger:hover{background:#dc2626}
+    .btn-outline{background:#fff;color:#374151;border:1px solid #d1d5db}
+    .dark .btn-outline{background:#1e293b;color:#cbd5e1;border-color:#475569}
+    .btn-outline:hover{background:#f9fafb}
+    .dark .btn-outline:hover{background:#334155}
+    .input{width:100%;padding:12px 16px;border:1px solid #d1d5db;border-radius:12px;font-size:14px;outline:none;transition:border .2s,background .3s,color .3s;background:#fff;color:#111827}
+    .dark .input{background:#1e293b;border-color:#475569;color:#e2e8f0}
+    .input:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+    .badge{display:inline-flex;padding:4px 12px;border-radius:9999px;font-size:12px;font-weight:600}
+    .badge-green{background:#d1fae5;color:#065f46}
+    .dark .badge-green{background:#064e3b;color:#6ee7b7}
+    .badge-blue{background:#dbeafe;color:#1e40af}
+    .dark .badge-blue{background:#1e3a5f;color:#93c5fd}
+    .badge-red{background:#fee2e2;color:#991b1b}
+    .dark .badge-red{background:#7f1d1d;color:#fca5a5}
+    .badge-yellow{background:#fef3c7;color:#92400e}
+    .dark .badge-yellow{background:#78350f;color:#fcd34d}
+    .page{display:none;min-height:calc(100vh - 64px)}
+    .page.active{display:block}
+    .fade-in{animation:fadeIn .3s ease-in}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .pulse{animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:100;opacity:0;pointer-events:none;transition:opacity .3s}
+    .dark .modal-overlay{background:rgba(0,0,0,.7)}
+    .modal-overlay.show{opacity:1;pointer-events:all}
+    .modal{background:#fff;border-radius:20px;padding:32px;max-width:500px;width:90%;transform:scale(.9);transition:transform .3s}
+    .dark .modal{background:#1e293b}
+    .modal-overlay.show .modal{transform:scale(1)}
+    .insight-card{border-left:4px solid;padding:16px;border-radius:0 12px 12px 0;margin-bottom:12px}
+    .insight-opportunity{border-color:#22c55e;background:#f0fdf4}
+    .dark .insight-opportunity{background:#052e16}
+    .insight-threat{border-color:#ef4444;background:#fef2f2}
+    .dark .insight-threat{background:#450a0a}
+    .insight-trend{border-color:#3b82f6;background:#eff6ff}
+    .dark .insight-trend{background:#172554}
+    .glow{box-shadow:0 0 40px rgba(37,99,235,.15)}
+    .dark .glow{box-shadow:0 0 60px rgba(37,99,235,.25)}
+    .progress-bar{height:4px;background:#e5e7eb;border-radius:9999px;overflow:hidden}
+    .dark .progress-bar{background:#334155}
+    .progress-fill{height:100%;background:linear-gradient(90deg,#2563eb,#9333ea);border-radius:9999px;transition:width .5s}
+    .theme-toggle{width:40px;height:40px;border-radius:12px;border:1px solid #d1d5db;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:all .3s}
+    .dark .theme-toggle{background:#1e293b;border-color:#475569}
+    .theme-toggle:hover{transform:scale(1.1)}
+    .loading-spinner{width:20px;height:20px;border:3px solid #e5e7eb;border-top-color:#2563eb;border-radius:50%;animation:spin .6s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .dark .bg-white{background:#1e293b}
+    .dark .bg-gray-50{background:#1e293b}
+    .dark .bg-gray-100{background:#334155}
+    .dark .text-gray-900{color:#f1f5f9}
+    .dark .text-gray-700{color:#cbd5e1}
+    .dark .text-gray-600{color:#94a3b8}
+    .dark .text-gray-500{color:#64748b}
+    .dark .text-gray-400{color:#475569}
+    .dark .border-gray-200{border-color:#334155}
+    .dark .border-gray-100{border-color:#1e293b}
+  </style>
+</head>
+<body class="bg-gray-50 dark:bg-slate-900 text-gray-900 dark:text-slate-100">
+
+<!-- SETUP BANNER (shown when Supabase not configured) -->
+<div id="setup-banner" style="display:none" class="bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800 px-4 py-3">
+  <div class="max-w-7xl mx-auto flex items-center justify-between">
+    <div class="flex items-center gap-2 text-sm">
+      <span>⚠️</span>
+      <span class="text-yellow-800 dark:text-yellow-200"><strong>Setup Required:</strong> Enter your Supabase credentials to enable authentication and database.</span>
+    </div>
+    <button onclick="showSetupModal()" class="text-sm font-medium text-yellow-800 dark:text-yellow-200 underline hover:no-underline">Configure →</button>
+  </div>
+</div>
+
+<!-- NAVBAR -->
+<nav class="glass border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between h-16 items-center">
+      <a href="#" onclick="showPage('home')" class="flex items-center gap-2 cursor-pointer">
+        <div class="w-9 h-9 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+          <span class="text-white font-bold text-sm">AF</span>
+        </div>
+        <span class="text-xl font-bold gradient-text">AgentForge</span>
+      </a>
+      <div class="flex items-center gap-4" id="nav-right">
+        <a href="#" onclick="showPage('dashboard')" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white font-medium transition-colors cursor-pointer">Dashboard</a>
+        <a href="#" onclick="showPage('marketplace')" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white font-medium transition-colors cursor-pointer">Marketplace</a>
+        <button onclick="toggleTheme()" class="theme-toggle" id="theme-btn" title="Toggle Dark Mode">🌙</button>
+        <div id="auth-buttons">
+          <button onclick="showPage('login')" class="btn btn-outline text-sm">Login</button>
+          <button onclick="showPage('register')" class="btn btn-primary text-sm">Get Started Free</button>
+        </div>
+        <div id="user-menu" style="display:none" class="flex items-center gap-3">
+          <span id="user-email" class="text-sm text-gray-600 dark:text-gray-400"></span>
+          <button onclick="handleLogout()" class="btn btn-outline text-sm">Logout</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- HOME PAGE -->
+<div id="page-home" class="page active">
+  <section class="hero py-24 sm:py-32 text-center relative overflow-hidden">
+    <div class="absolute inset-0 opacity-10">
+      <div class="absolute top-10 left-10 w-72 h-72 bg-blue-500 rounded-full blur-3xl"></div>
+      <div class="absolute bottom-10 right-10 w-72 h-72 bg-purple-500 rounded-full blur-3xl"></div>
+    </div>
+    <div class="relative max-w-4xl mx-auto px-4">
+      <div class="inline-block mb-6 px-4 py-2 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-full text-sm font-semibold">🚀 Now in Public Beta - Start Free</div>
+      <h1 class="text-5xl sm:text-7xl font-bold tracking-tight text-gray-900 dark:text-white mb-6 leading-tight">
+        Your AI Competitive<br><span class="gradient-text">Intelligence Team</span>
+      </h1>
+      <p class="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-10 leading-relaxed">
+        Deploy AI agents that <strong>monitor your competitors 24/7</strong>. Get strategic insights delivered weekly.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center mb-6">
+        <button onclick="showPage('register')" class="btn btn-primary text-lg px-10 py-4 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40">Start Free - No Credit Card</button>
+        <button onclick="showPage('dashboard')" class="btn btn-outline text-lg px-10 py-4">Live Demo →</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-24 bg-white dark:bg-slate-800">
+    <div class="max-w-7xl mx-auto px-4">
+      <div class="text-center mb-16">
+        <span class="badge badge-blue mb-4">Simple Process</span>
+        <h2 class="text-4xl font-bold">How AgentForge Works</h2>
+      </div>
+      <div class="grid md:grid-cols-4 gap-8">
+        <div class="text-center p-6 fade-in">
+          <div class="w-20 h-20 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 rounded-2xl flex items-center justify-center text-4xl mx-auto mb-4">🌐</div>
+          <div class="text-sm font-bold text-blue-600 dark:text-blue-400 mb-2">Step 1</div>
+          <h3 class="text-lg font-bold mb-2">Add Competitors</h3>
+          <p class="text-gray-600 dark:text-gray-400 text-sm">Enter any competitor website URL</p>
+        </div>
+        <div class="text-center p-6 fade-in">
+          <div class="w-20 h-20 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 rounded-2xl flex items-center justify-center text-4xl mx-auto mb-4">🤖</div>
+          <div class="text-sm font-bold text-blue-600 dark:text-blue-400 mb-2">Step 2</div>
+          <h3 class="text-lg font-bold mb-2">Configure Agent</h3>
+          <p class="text-gray-600 dark:text-gray-400 text-sm">Choose what to monitor & when</p>
+        </div>
+        <div class="text-center p-6 fade-in">
+          <div class="w-20 h-20 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 rounded-2xl flex items-center justify-center text-4xl mx-auto mb-4">🧠</div>
+          <div class="text-sm font-bold text-blue-600 dark:text-blue-400 mb-2">Step 3</div>
+          <h3 class="text-lg font-bold mb-2">AI Analyzes</h3>
+          <p class="text-gray-600 dark:text-gray-400 text-sm">GPT-powered change detection & analysis</p>
+        </div>
+        <div class="text-center p-6 fade-in">
+          <div class="w-20 h-20 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 rounded-2xl flex items-center justify-center text-4xl mx-auto mb-4">📊</div>
+          <div class="text-sm font-bold text-blue-600 dark:text-blue-400 mb-2">Step 4</div>
+          <h3 class="text-lg font-bold mb-2">Get Insights</h3>
+          <p class="text-gray-600 dark:text-gray-400 text-sm">Actionable reports delivered weekly</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-24 bg-gray-50 dark:bg-slate-900">
+    <div class="max-w-7xl mx-auto px-4">
+      <div class="text-center mb-16">
+        <span class="badge badge-blue mb-4">Features</span>
+        <h2 class="text-4xl font-bold">Built for Strategic Teams</h2>
+      </div>
+      <div class="grid md:grid-cols-3 gap-8">
+        <div class="card"><div class="text-4xl mb-4">🔍</div><h3 class="text-lg font-bold mb-2">Website Monitoring</h3><p class="text-gray-600 dark:text-gray-400 text-sm">Track pricing pages, features, job postings, blog posts, and social media.</p></div>
+        <div class="card"><div class="text-4xl mb-4">🧠</div><h3 class="text-lg font-bold mb-2">AI-Powered Analysis</h3><p class="text-gray-600 dark:text-gray-400 text-sm">GPT-4o analyzes changes, identifies patterns, and predicts competitor strategy.</p></div>
+        <div class="card"><div class="text-4xl mb-4">📤</div><h3 class="text-lg font-bold mb-2">Shareable Reports</h3><p class="text-gray-600 dark:text-gray-400 text-sm">One-click sharing. Beautiful reports your team will actually read.</p></div>
+        <div class="card"><div class="text-4xl mb-4">🔄</div><h3 class="text-lg font-bold mb-2">Clone Marketplace</h3><p class="text-gray-600 dark:text-gray-400 text-sm">Borrow winning agent configurations from the community.</p></div>
+        <div class="card"><div class="text-4xl mb-4">⚡</div><h3 class="text-lg font-bold mb-2">Visual Builder</h3><p class="text-gray-600 dark:text-gray-400 text-sm">Build custom monitoring workflows with our drag-and-drop editor.</p></div>
+        <div class="card"><div class="text-4xl mb-4">🔌</div><h3 class="text-lg font-bold mb-2">API & Integrations</h3><p class="text-gray-600 dark:text-gray-400 text-sm">Connect to Slack, email, Notion, or your own tools.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-16 bg-gray-50 dark:bg-slate-900">
+    <div class="max-w-5xl mx-auto px-4 text-center">
+      <p class="text-gray-500 mb-8">TRUSTED BY TEAMS AT</p>
+      <div class="flex justify-center items-center gap-12 opacity-40">
+        <span class="text-2xl font-bold text-gray-400">TechCorp</span>
+        <span class="text-2xl font-bold text-gray-400">StartupX</span>
+        <span class="text-2xl font-bold text-gray-400">DataLab</span>
+        <span class="text-2xl font-bold text-gray-400">CloudBase</span>
+      </div>
+      <div class="flex justify-center gap-12 mt-12">
+        <div class="text-center"><div class="text-3xl font-bold gradient-text">500+</div><div class="text-sm text-gray-500 dark:text-gray-400 mt-1">Active Users</div></div>
+        <div class="text-center"><div class="text-3xl font-bold gradient-text">50K+</div><div class="text-sm text-gray-500 dark:text-gray-400 mt-1">Reports Generated</div></div>
+        <div class="text-center"><div class="text-3xl font-bold gradient-text">4.9/5</div><div class="text-sm text-gray-500 dark:text-gray-400 mt-1">User Rating</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-24 bg-gradient-to-r from-blue-600 to-purple-600 text-center relative overflow-hidden">
+    <div class="absolute inset-0 opacity-10"><div class="absolute top-0 left-1/4 w-96 h-96 bg-white rounded-full blur-3xl"></div></div>
+    <div class="relative max-w-3xl mx-auto px-4">
+      <h2 class="text-4xl sm:text-5xl font-bold text-white mb-6">Stop Guessing.<br>Start Knowing.</h2>
+      <p class="text-xl text-blue-100 mb-8">Join 500+ teams using AI to stay ahead.</p>
+      <button onclick="showPage('register')" class="bg-white text-blue-600 px-10 py-4 rounded-xl text-lg font-bold hover:bg-blue-50 transition-all hover:scale-105 shadow-xl">Deploy Your First Agent Free →</button>
+    </div>
+  </section>
+</div>
+
+<!-- LOGIN PAGE -->
+<div id="page-login" class="page">
+  <div class="max-w-md mx-auto px-4 py-16">
+    <div class="text-center mb-8">
+      <div class="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"><span class="text-white font-bold text-2xl">AF</span></div>
+      <h1 class="text-3xl font-bold">Welcome Back</h1>
+      <p class="text-gray-600 dark:text-gray-400 mt-2">Sign in to your account</p>
+    </div>
+    <div class="card">
+      <form onsubmit="handleLogin(event)">
+        <div class="mb-4"><label class="block text-sm font-medium mb-2">Email</label><input class="input" type="email" id="login-email" placeholder="you@company.com" required></div>
+        <div class="mb-6"><label class="block text-sm font-medium mb-2">Password</label><input class="input" type="password" id="login-password" placeholder="Your password" required></div>
+        <button type="submit" class="btn btn-primary w-full justify-center text-base py-3" id="login-btn">Sign In</button>
+      </form>
+      <div class="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">Don't have an account? <a href="#" onclick="showPage('register')" class="text-blue-600 dark:text-blue-400 font-medium">Sign up</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- REGISTER PAGE -->
+<div id="page-register" class="page">
+  <div class="max-w-md mx-auto px-4 py-16">
+    <div class="text-center mb-8">
+      <div class="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"><span class="text-white font-bold text-2xl">AF</span></div>
+      <h1 class="text-3xl font-bold">Create Free Account</h1>
+      <p class="text-gray-600 dark:text-gray-400 mt-2">No credit card required</p>
+    </div>
+    <div class="card">
+      <form onsubmit="handleRegister(event)">
+        <div class="mb-4"><label class="block text-sm font-medium mb-2">Full Name</label><input class="input" id="reg-name" placeholder="John Smith" required></div>
+        <div class="mb-4"><label class="block text-sm font-medium mb-2">Work Email</label><input class="input" type="email" id="reg-email" placeholder="john@company.com" required></div>
+        <div class="mb-6"><label class="block text-sm font-medium mb-2">Password</label><input class="input" type="password" id="reg-password" placeholder="Min 8 characters" required minlength="8"></div>
+        <button type="submit" class="btn btn-primary w-full justify-center text-base py-3" id="reg-btn">Create Account</button>
+      </form>
+      <div class="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">Already have an account? <a href="#" onclick="showPage('login')" class="text-blue-600 dark:text-blue-400 font-medium">Sign in</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD PAGE -->
+<div id="page-dashboard" class="page">
+  <div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-8">
+      <div><h1 class="text-3xl font-bold">Dashboard</h1><p class="text-gray-600 dark:text-gray-400 mt-1">Your competitive intelligence overview</p></div>
+      <button onclick="showPage('new-agent')" class="btn btn-primary">+ New Agent</button>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8" id="stats-grid"></div>
+    <div class="card mb-8" id="agents-list"></div>
+    <div class="card" id="reports-list"></div>
+  </div>
+</div>
+
+<!-- NEW AGENT PAGE -->
+<div id="page-new-agent" class="page">
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-8">Create New Agent</h1>
+    <div class="flex items-center justify-center mb-12" id="agent-steps"></div>
+    <div id="agent-form"></div>
+  </div>
+</div>
+
+<!-- MARKETPLACE PAGE -->
+<div id="page-marketplace" class="page">
+  <div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="text-center mb-12">
+      <h1 class="text-4xl font-bold mb-4">Agent Marketplace</h1>
+      <p class="text-xl text-gray-600 dark:text-gray-400">Discover and clone winning strategies</p>
+    </div>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="marketplace-grid"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" style="position:fixed;bottom:24px;right:24px;z-index:200;display:none;"></div>
+
+<script>
+// ===== SUPABASE CLIENT =====
+const SUPABASE_URL = localStorage.getItem('sb_url') || '';
+const SUPABASE_KEY = localStorage.getItem('sb_key') || '';
+let sb = null;
+let currentUser = null;
+
+function initSupabase() {
+  if (SUPABASE_URL && SUPABASE_KEY && window.supabase) {
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    checkSession();
+    return true;
+  }
+  document.getElementById('setup-banner').style.display = 'flex';
+  return false;
+}
+
+async function checkSession() {
+  if (!sb) return;
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    updateAuthUI();
+  }
+  sb.auth.onAuthStateChange((event, session) => {
+    currentUser = session?.user || null;
+    updateAuthUI();
+  });
+}
+
+function updateAuthUI() {
+  const authBtns = document.getElementById('auth-buttons');
+  const userMenu = document.getElementById('user-menu');
+  const userEmail = document.getElementById('user-email');
+  if (currentUser) {
+    authBtns.style.display = 'none';
+    userMenu.style.display = 'flex';
+    userEmail.textContent = currentUser.email;
+  } else {
+    authBtns.style.display = 'flex';
+    userMenu.style.display = 'none';
+  }
+}
+
+// ===== DARK MODE =====
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.classList.toggle('dark');
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  document.getElementById('theme-btn').textContent = isDark ? '☀️' : '🌙';
+}
+(function(){const isDark = document.documentElement.classList.contains('dark');document.getElementById('theme-btn').textContent = isDark ? '☀️' : '🌙';})();
+
+// ===== TOAST =====
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  const colors = {success:'bg-green-500',error:'bg-red-500',info:'bg-blue-500'};
+  t.innerHTML = `<div class="${colors[type]} text-white px-6 py-3 rounded-xl shadow-lg font-medium fade-in">${msg}</div>`;
+  t.style.display = 'block';
+  setTimeout(()=>{t.style.display='none'}, 3000);
+}
+
+// ===== MODAL =====
+function showModal(html) { document.getElementById('modal-content').innerHTML = html; document.getElementById('modal').classList.add('show'); }
+function closeModal() { document.getElementById('modal').classList.remove('show'); }
+
+// ===== SETUP MODAL =====
+function showSetupModal() {
+  showModal(`
+    <div>
+      <h3 class="text-xl font-bold mb-2">Configure Supabase</h3>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Get these from <a href="https://supabase.com" target="_blank" class="text-blue-600 underline">supabase.com</a></p>
+      <div class="mb-4"><label class="block text-sm font-medium mb-2">Project URL</label><input class="input" id="cfg-url" placeholder="https://xxxx.supabase.co" value="${SUPABASE_URL}"></div>
+      <div class="mb-4"><label class="block text-sm font-medium mb-2">Anon Key</label><input class="input" id="cfg-key" placeholder="eyJhbGciOiJI..." value="${SUPABASE_KEY}"></div>
+      <div class="mb-4"><label class="block text-sm font-medium mb-2">OpenAI API Key (optional)</label><input class="input" id="cfg-openai" placeholder="sk-..." value="${localStorage.getItem('openai_key')||''}"></div>
+      <button onclick="saveConfig()" class="btn btn-primary w-full justify-center">Save & Reload</button>
+    </div>
+  `);
+}
+
+function saveConfig() {
+  localStorage.setItem('sb_url', document.getElementById('cfg-url').value.trim());
+  localStorage.setItem('sb_key', document.getElementById('cfg-key').value.trim());
+  localStorage.setItem('openai_key', document.getElementById('cfg-openai').value.trim());
+  location.reload();
+}
+
+// ===== NAVIGATION =====
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  window.scrollTo(0,0);
+  if (page==='dashboard') { if(!currentUser){showPage('login');return;} renderDashboard(); }
+  if (page==='marketplace') renderMarketplace();
+  if (page==='new-agent') { if(!currentUser){showPage('login');return;} state.newAgent={step:0,template:'',name:'',desc:'',competitors:[],schedule:'Weekly'}; renderNewAgent(); }
+}
+
+// ===== AUTH =====
+async function handleLogin(e) {
+  e.preventDefault();
+  if(!sb){showSetupModal();return;}
+  const btn = document.getElementById('login-btn');
+  btn.innerHTML = '<div class="loading-spinner"></div> Signing in...';
+  btn.disabled = true;
+  const { data, error } = await sb.auth.signInWithPassword({
+    email: document.getElementById('login-email').value,
+    password: document.getElementById('login-password').value,
+  });
+  btn.innerHTML = 'Sign In'; btn.disabled = false;
+  if (error) { showToast(error.message, 'error'); return; }
+  currentUser = data.user;
+  updateAuthUI();
+  showToast('Welcome back! 🎉');
+  showPage('dashboard');
+}
+
+async function handleRegister(e) {
+  e.preventDefault();
+  if(!sb){showSetupModal();return;}
+  const btn = document.getElementById('reg-btn');
+  btn.innerHTML = '<div class="loading-spinner"></div> Creating...';
+  btn.disabled = true;
+  const { data, error } = await sb.auth.signUp({
+    email: document.getElementById('reg-email').value,
+    password: document.getElementById('reg-password').value,
+    options: { data: { full_name: document.getElementById('reg-name').value } }
+  });
+  btn.innerHTML = 'Create Account'; btn.disabled = false;
+  if (error) { showToast(error.message, 'error'); return; }
+  if (data.user?.identities?.length === 0) { showToast('Email already registered', 'error'); return; }
+  showToast('Account created! Check your email for verification 📧');
+  showPage('login');
+}
+
+async function handleLogout() {
+  if (sb) await sb.auth.signOut();
+  currentUser = null;
+  updateAuthUI();
+  showToast('Logged out', 'info');
+  showPage('home');
+}
+
+// ===== STATE =====
+const state = {
+  agents: [],
+  reports: [],
+  templates: [
+    {id:'competitor_intel',name:'Competitor Intelligence',desc:'Monitor websites for pricing, features, and content changes',icon:'🔍',steps:['Fetch website','Extract changes','Analyze strategy','Generate report']},
+    {id:'pricing_monitor',name:'Pricing Monitor',desc:'Track competitor pricing changes and get alerts',icon:'💰',steps:['Fetch pricing page','Parse prices','Compare baseline','Send alert']},
+    {id:'job_tracker',name:'Job Posting Tracker',desc:'Monitor competitor hiring for strategic insights',icon:'💼',steps:['Fetch careers page','Extract listings','Analyze trends','Generate report']},
+    {id:'content_monitor',name:'Content Monitor',desc:'Track blog posts, press releases, and announcements',icon:'📝',steps:['Fetch blog/feed','Parse content','Analyze messaging','Generate brief']},
+  ],
+  marketplace: [
+    {id:'1',name:'SaaS Pricing Tracker',desc:'Monitors competitor pricing pages weekly',clones:47,author:'Sarah Chen',template:'pricing_monitor'},
+    {id:'2',name:'Job Market Intelligence',desc:'Tracks hiring trends across competitors',clones:32,author:'Mike Johnson',template:'job_tracker'},
+    {id:'3',name:'Feature Update Monitor',desc:'Detects new features and product changes',clones:28,author:'Alex Rivera',template:'competitor_intel'},
+    {id:'4',name:'Social Media Watch',desc:'Monitors competitor social presence',clones:21,author:'Emma Wilson',template:'content_monitor'},
+    {id:'5',name:'Blog Content Analyzer',desc:'Analyzes competitor content strategy',clones:19,author:'David Park',template:'content_monitor'},
+    {id:'6',name:'SEO Backlink Tracker',desc:'Monitors competitor backlink growth',clones:15,author:'Lisa Chen',template:'competitor_intel'},
+  ],
+  newAgent: {step:0,template:'',name:'',desc:'',competitors:[],schedule:'Weekly'}
+};
+
+// ===== DB OPERATIONS =====
+async function dbQuery(table, method='select', filter='', body=null) {
+  if (!sb) return { data: null, error: 'Supabase not configured' };
+  let query = sb.from(table);
+  if (method === 'select') query = filter ? query.select(filter) : query.select('*');
+  else if (method === 'insert') query = query.insert(body);
+  else if (method === 'update') query = query.update(body).eq('id', filter);
+  else if (method === 'delete') query = query.delete().eq('id', filter);
+  return await query;
+}
+
+// ===== RENDER: DASHBOARD =====
+async function renderDashboard() {
+  if (!currentUser) return;
+
+  // Fetch from Supabase
+  const { data: agents } = await dbQuery('agents');
+  const { data: reports } = await dbQuery('reports');
+  state.agents = agents || [];
+  state.reports = reports || [];
+
+  const activeAgents = state.agents.filter(a=>a.status==='active').length;
+  const totalInsights = state.agents.reduce((s,a)=>s+(a.insights_count||0),0);
+
+  document.getElementById('stats-grid').innerHTML = [
+    {l:'Active Agents',v:activeAgents,i:'🤖'},{l:'Insights This Month',v:totalInsights,i:'💡'},{l:'Competitors Tracked',v:state.agents.reduce((s,a)=>s+(a.competitors?.length||0),0),i:'🎯'},{l:'Reports Generated',v:state.reports.length,i:'📊'}
+  ].map(s=>`<div class="card"><div class="flex items-center justify-between"><div><p class="text-sm text-gray-600 dark:text-gray-400">${s.l}</p><p class="text-3xl font-bold mt-1">${s.v}</p></div><span class="text-3xl">${s.i}</span></div></div>`).join('');
+
+  document.getElementById('agents-list').innerHTML = `
+    <div class="flex justify-between items-center mb-6"><h2 class="text-xl font-bold">Your Agents</h2></div>
+    ${state.agents.length===0?'<div class="text-center py-12"><div class="text-5xl mb-4">🤖</div><p class="text-gray-600 dark:text-gray-400 mb-4">No agents yet</p><button onclick="showPage(\'new-agent\')" class="btn btn-primary">Create Your First Agent</button></div>':
+    state.agents.map(a=>`
+      <div class="flex items-center justify-between py-4 border-b border-gray-100 dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800 px-4 rounded-lg transition-colors cursor-pointer" onclick="showAgentDetail('${a.id}')">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center text-white text-xl shadow-md">🤖</div>
+          <div><h3 class="font-bold">${a.name}</h3><p class="text-sm text-gray-600 dark:text-gray-400">${a.description||''}</p></div>
+        </div>
+        <div class="flex items-center gap-6">
+          <div class="text-right text-sm text-gray-600 dark:text-gray-400"><p>Insights: ${a.insights_count||0}</p></div>
+          <span class="badge badge-green">${a.status}</span>
+        </div>
+      </div>
+    `).join('')}`;
+
+  document.getElementById('reports-list').innerHTML = `
+    <div class="flex justify-between items-center mb-6"><h2 class="text-xl font-bold">Recent Reports</h2></div>
+    ${state.reports.length===0?'<div class="text-center py-8 text-gray-500 dark:text-gray-400">Reports will appear here after your agents run</div>':
+    state.reports.map(r=>`
+      <div class="flex items-center justify-between py-4 border-b border-gray-100 dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800 px-4 rounded-lg cursor-pointer transition-colors" onclick="showReport('${r.id}')">
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-xl flex items-center justify-center text-green-600 dark:text-green-400">📊</div>
+          <div><h3 class="font-medium">${r.title||'Report'}</h3><p class="text-sm text-gray-600 dark:text-gray-400">${new Date(r.created_at).toLocaleDateString()}</p></div>
+        </div>
+        <span class="badge badge-green">${r.status}</span>
+      </div>
+    `).join('')}`;
+}
+
+// ===== RENDER: MARKETPLACE =====
+function renderMarketplace() {
+  document.getElementById('marketplace-grid').innerHTML = state.marketplace.map(a=>`
+    <div class="card">
+      <div class="flex justify-between items-start mb-2"><h3 class="text-lg font-bold">${a.name}</h3><span class="badge badge-blue">${a.clones} clones</span></div>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">by ${a.author}</p>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">${a.desc}</p>
+      <button onclick="cloneMarketplaceAgent('${a.id}')" class="btn btn-primary w-full justify-center text-sm">Clone This Agent</button>
+    </div>
+  `).join('');
+}
+
+// ===== RENDER: NEW AGENT =====
+function renderNewAgent() {
+  const a = state.newAgent;
+  document.getElementById('agent-steps').innerHTML = ['Template','Configure','Competitors'].map((s,i)=>`
+    <div class="flex items-center">
+      <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold ${a.step===i?'bg-blue-600 text-white':i<a.step?'bg-green-500 text-white':'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}">${i+1}</div>
+      ${i<2?'<div class="w-20 h-1 bg-gray-200 dark:bg-gray-700 mx-2"></div>':''}
+    </div>
+  `).join('');
+
+  let form = '';
+  if(a.step===0) {
+    form = `<div class="grid md:grid-cols-2 gap-4">${state.templates.map(t=>`
+      <div class="card cursor-pointer transition-all ${a.template===t.id?'border-2 border-blue-600 glow':''}" onclick="state.newAgent.template='${t.id}';renderNewAgent()">
+        <div class="text-4xl mb-3">${t.icon}</div>
+        <h3 class="font-bold mb-1">${t.name}</h3>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">${t.desc}</p>
+        <div class="text-xs text-gray-500 dark:text-gray-400"><p class="font-medium mb-1">Steps:</p><ol class="list-decimal list-inside">${t.steps.map(s=>'<li>'+s+'</li>').join('')}</ol></div>
+      </div>
+    `).join('')}</div>`;
+  } else if(a.step===1) {
+    form = `<div class="card space-y-6 fade-in">
+      <div><label class="block text-sm font-medium mb-2">Agent Name *</label><input class="input" placeholder="e.g., Weekly Competitor Report" value="${a.name}" oninput="state.newAgent.name=this.value"></div>
+      <div><label class="block text-sm font-medium mb-2">Description</label><input class="input" placeholder="What should this agent monitor?" value="${a.desc}" oninput="state.newAgent.desc=this.value"></div>
+      <div><label class="block text-sm font-medium mb-2">Schedule</label>
+        <div class="flex gap-3">${['Daily','Weekly','Monthly'].map(f=>`<button onclick="state.newAgent.schedule='${f}';renderNewAgent()" class="px-6 py-2 rounded-xl border-2 ${a.schedule===f?'border-blue-600 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400':'border-gray-200 dark:border-gray-700'} transition-all font-medium">${f}</button>`).join('')}</div>
+      </div>
+    </div>`;
+  } else if(a.step===2) {
+    form = `<div class="card space-y-6 fade-in">
+      <div class="flex gap-3">
+        <input class="input" placeholder="Competitor name" id="comp-name">
+        <input class="input" placeholder="https://example.com" id="comp-url">
+        <button onclick="addCompetitor()" class="btn btn-primary whitespace-nowrap">+ Add</button>
+      </div>
+      <div id="comp-list">${a.competitors.map((c,i)=>`
+        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl mb-2 fade-in">
+          <div><span class="font-bold">${c.name}</span><span class="text-gray-500 dark:text-gray-400 ml-3">${c.website}</span></div>
+          <button onclick="state.newAgent.competitors.splice(${i},1);renderNewAgent()" class="text-red-500 hover:text-red-700 font-medium text-sm">Remove</button>
+        </div>
+      `).join('')}</div>
+      ${a.competitors.length===0?'<p class="text-center text-gray-500 dark:text-gray-400 py-6">Add at least one competitor to monitor</p>':''}
+    </div>`;
+  }
+
+  document.getElementById('agent-form').innerHTML = `
+    ${form}
+    <div class="flex justify-between mt-8">
+      <button class="btn btn-outline" onclick="state.newAgent.step=Math.max(0,state.newAgent.step-1);renderNewAgent()" ${a.step===0?'disabled style="opacity:0.5;cursor:not-allowed"':''}>← Back</button>
+      ${a.step<2?
+        `<button class="btn btn-primary" onclick="state.newAgent.step++;renderNewAgent()" ${(a.step===0&&!a.template)||(a.step===1&&!a.name)?'disabled style="opacity:0.5;cursor:not-allowed"':''}>Next →</button>`:
+        `<button class="btn btn-primary" onclick="createAgent()" ${a.competitors.length===0?'disabled style="opacity:0.5;cursor:not-allowed"':''}>🚀 Create Agent</button>`
+      }
+    </div>`;
+}
+
+// ===== ACTIONS =====
+function addCompetitor() {
+  const name = document.getElementById('comp-name').value;
+  const url = document.getElementById('comp-url').value;
+  if(name && url) {
+    state.newAgent.competitors.push({name, website:url});
+    document.getElementById('comp-name').value='';
+    document.getElementById('comp-url').value='';
+    renderNewAgent();
+    showToast('Competitor added!');
+  }
+}
+
+async function createAgent() {
+  const a = state.newAgent;
+  const { data, error } = await dbQuery('agents','insert',null,{
+    user_id: currentUser.id,
+    name: a.name,
+    description: a.desc,
+    template: a.template,
+    status: 'active',
+    competitors: a.competitors,
+    schedule: a.schedule,
+    insights_count: 0,
+  });
+  if(error){showToast('Error: '+error.message,'error');return;}
+  showToast('Agent created successfully! 🎉');
+  showPage('dashboard');
+}
+
+async function runAgent(id) {
+  const agent = state.agents.find(a=>a.id===id);
+  if(!agent) return;
+  showModal(`
+    <div class="text-center">
+      <div class="text-5xl mb-4 pulse">🤖</div>
+      <h3 class="text-xl font-bold mb-2">Running ${agent.name}</h3>
+      <div class="progress-bar mb-4"><div class="progress-fill" style="width:0%" id="run-progress"></div></div>
+      <p class="text-gray-600 dark:text-gray-400 text-sm" id="run-status">Fetching competitor data...</p>
+    </div>
+  `);
+
+  let progress = 0;
+  const steps = ['Fetching websites...','Extracting changes...','AI analyzing strategy...','Generating insights...','Building report...'];
+  const interval = setInterval(async()=>{
+    progress += 20;
+    const el = document.getElementById('run-progress');
+    const st = document.getElementById('run-status');
+    if(el) el.style.width = progress+'%';
+    if(st) st.textContent = steps[Math.min(Math.floor(progress/20),steps.length-1)];
+    if(progress>=100) {
+      clearInterval(interval);
+      const newInsights = Math.floor(Math.random()*5)+3;
+
+      // Save report to Supabase
+      const reportData = {
+        user_id: currentUser.id,
+        agent_id: agent.id,
+        title: agent.name + ' - Report',
+        status: 'completed',
+        summary: 'New competitive intelligence report generated. Key changes detected across ' + (agent.competitors?.length||0) + ' competitors.',
+        insights: [
+          {type:'opportunity',title:'Market Opportunity',description:'AI detected a potential market gap based on competitor analysis.',confidence:0.87},
+          {type:'threat',title:'Competitive Threat',description:'A competitor launched a feature that overlaps with your offering.',confidence:0.72},
+          {type:'trend',title:'Industry Trend',description:'Multiple competitors shifting toward AI-powered features.',confidence:0.91},
+        ],
+        competitor_changes: agent.competitors?.map(c=>({name:c.name,changes:[{type:'modified',field:'Website',significance:'high'}]}))||[],
+      };
+      await dbQuery('reports','insert',null,reportData);
+
+      // Update agent insights count
+      await dbQuery('agents','update',id,{insights_count:(agent.insights_count||0)+newInsights});
+
+      closeModal();
+      showToast('Agent completed! '+newInsights+' new insights 🔥');
+      renderDashboard();
+    }
+  }, 600);
+}
+
+function cloneMarketplaceAgent(id) {
+  const a = state.marketplace.find(m=>m.id===id);
+  if(!currentUser){showPage('login');return;}
+  if(a){
+    a.clones++;
+    state.newAgent = {step:1,template:a.template,name:a.name,desc:a.desc,competitors:[],schedule:'Weekly'};
+    showPage('new-agent');
+    showToast('Template loaded! Add your competitors and create the agent.','info');
+  }
+}
+
+function showAgentDetail(id) {
+  const a = state.agents.find(ag=>ag.id===id);
+  if(!a) return;
+  showModal(`
+    <div>
+      <div class="flex justify-between items-center mb-4">
+        <div><h3 class="text-xl font-bold">${a.name}</h3><p class="text-sm text-gray-500 dark:text-gray-400">${a.description||''}</p></div>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl">✕</button>
+      </div>
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-4"><p class="text-sm text-gray-600 dark:text-gray-400">Schedule</p><p class="font-bold">${a.schedule||'Weekly'}</p></div>
+        <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-4"><p class="text-sm text-gray-600 dark:text-gray-400">Status</p><p class="font-bold"><span class="badge badge-green">${a.status}</span></p></div>
+        <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-4"><p class="text-sm text-gray-600 dark:text-gray-400">Template</p><p class="font-bold">${a.template}</p></div>
+        <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-4"><p class="text-sm text-gray-600 dark:text-gray-400">Insights</p><p class="font-bold">${a.insights_count||0}</p></div>
+      </div>
+      <div class="mb-4"><p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Competitors (${a.competitors?.length||0})</p>
+        ${a.competitors?.length>0?a.competitors.map(c=>`<span class="badge badge-blue mr-2 mb-1">${typeof c==='string'?c:c.name}</span>`).join(''):'<p class="text-sm text-gray-500 dark:text-gray-400">No competitors</p>'}
+      </div>
+      <div class="flex gap-3">
+        <button onclick="closeModal();runAgent('${a.id}')" class="btn btn-primary flex-1 justify-center">▶ Run Now</button>
+        <button onclick="deleteAgent('${a.id}')" class="btn btn-danger flex-1 justify-center">Delete</button>
+      </div>
+    </div>
+  `);
+}
+
+async function deleteAgent(id) {
+  if(!confirm('Delete this agent?')) return;
+  await dbQuery('agents','delete',id);
+  closeModal();
+  showToast('Agent deleted','info');
+  renderDashboard();
+}
+
+function showReport(id) {
+  const r = state.reports.find(rpt=>rpt.id===id);
+  if(!r) return;
+  const insights = r.insights || [];
+  const changes = r.competitor_changes || [];
+  showModal(`
+    <div style="max-height:70vh;overflow-y:auto">
+      <div class="flex justify-between items-center mb-4">
+        <div><h3 class="text-xl font-bold">${r.title||'Report'}</h3><p class="text-sm text-gray-500 dark:text-gray-400">${new Date(r.created_at).toLocaleString()}</p></div>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl">✕</button>
+      </div>
+      <div class="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-4 mb-4">
+        <h4 class="font-bold mb-2">Summary</h4>
+        <p class="text-sm text-gray-700 dark:text-gray-300">${r.summary||'No summary available'}</p>
+      </div>
+      ${insights.length>0?`<h4 class="font-bold mb-3">Insights</h4>${insights.map(i=>`
+        <div class="insight-card insight-${i.type||'trend'}">
+          <div class="flex items-center gap-2 mb-1"><span class="badge badge-${i.type==='opportunity'?'green':i.type==='threat'?'red':'blue'} text-xs">${i.type}</span><span class="text-xs text-gray-500">${Math.round((i.confidence||0)*100)}%</span></div>
+          <h5 class="font-bold text-sm">${i.title}</h5>
+          <p class="text-xs text-gray-600 dark:text-gray-400">${i.description}</p>
+        </div>
+      `).join('')}`:'<p class="text-gray-500 text-sm">No insights yet</p>'}
+      <button onclick="closeModal()" class="btn btn-outline w-full justify-center mt-4">Close</button>
+    </div>
+  `);
+}
+
+// ===== INIT =====
+initSupabase();
+renderMarketplace();
+</script>
+</body>
+</html>

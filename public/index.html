@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgentForge — AI Competitive Intelligence</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={darkMode:'class'}</script>
+<style>
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes pulse-ring{0%{transform:scale(.8);opacity:1}100%{transform:scale(2.4);opacity:0}}
+@keyframes gradient-shift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes fade-in{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slide-in{from{transform:translateX(-100%)}to{transform:translateX(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.animate-float{animation:float 3s ease-in-out infinite}
+.animate-gradient{background-size:200% 200%;animation:gradient-shift 3s ease infinite}
+.animate-fade-in{animation:fade-in .5s ease-out both}
+.animate-slide-in{animation:slide-in .3s ease-out both}
+.animate-spin-slow{animation:spin 2s linear infinite}
+.insight-card{transition:all .3s ease}
+.insight-card:hover{transform:translateY(-4px);box-shadow:0 20px 40px rgba(0,0,0,.1)}
+.btn-glow{position:relative;overflow:hidden}
+.btn-glow::after{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(45deg,transparent,rgba(255,255,255,.1),transparent);transform:rotate(45deg);transition:.5s}
+.btn-glow:hover::after{left:100%}
+.glass{background:rgba(255,255,255,.05);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.1)}
+.sidebar-item{transition:all .2s ease}
+.sidebar-item:hover,.sidebar-item.active{background:rgba(99,102,241,.15);color:#818cf8}
+.dark .sidebar-item:hover,.dark .sidebar-item.active{background:rgba(99,102,241,.25)}
+.toast{animation:fade-in .3s ease-out both;position:fixed;top:24px;right:24px;z-index:9999}
+.hidden-page{display:none}
+</style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen">
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<!-- Sidebar -->
+<aside id="sidebar" class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 z-40 hidden md:block transition-transform">
+  <div class="p-6">
+    <div class="flex items-center gap-3 mb-8">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-lg">AF</div>
+      <span class="font-bold text-lg">AgentForge</span>
+    </div>
+    <nav class="space-y-1">
+      <a href="#" onclick="navigate('dashboard')" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium" data-page="dashboard">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Dashboard
+      </a>
+      <a href="#" onclick="navigate('agents')" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium" data-page="agents">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+        Agents
+      </a>
+      <a href="#" onclick="navigate('reports')" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium" data-page="reports">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Reports
+      </a>
+      <a href="#" onclick="navigate('marketplace')" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium" data-page="marketplace">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+        Marketplace
+      </a>
+      <a href="#" onclick="navigate('pricing')" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium" data-page="pricing">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Pricing
+      </a>
+    </nav>
+  </div>
+  <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-800">
+    <div id="user-info" class="flex items-center gap-3 px-2">
+      <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-sm font-bold" id="user-avatar">?</div>
+      <div class="flex-1 min-w-0">
+        <div class="text-sm font-medium truncate" id="user-name">Guest</div>
+        <div class="text-xs text-gray-500 truncate" id="user-email"></div>
+      </div>
+      <button onclick="logout()" class="text-gray-400 hover:text-red-500 transition-colors" title="Logout">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      </button>
+    </div>
+  </div>
+</aside>
+
+<!-- Mobile Header -->
+<div class="md:hidden fixed top-0 left-0 right-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 z-50 px-4 py-3 flex items-center justify-between">
+  <div class="flex items-center gap-2">
+    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-xs">AF</div>
+    <span class="font-bold">AgentForge</span>
+  </div>
+  <div class="flex items-center gap-2">
+    <button onclick="toggleDark()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+      <span id="mobile-theme-icon">🌙</span>
+    </button>
+    <button onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- Mobile Menu -->
+<div id="mobile-menu" class="hidden md:hidden fixed inset-0 z-50 bg-black/50" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="w-64 h-full bg-white dark:bg-gray-900 p-4">
+    <div class="flex items-center gap-3 mb-6 p-2">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold">AF</div>
+      <span class="font-bold text-lg">AgentForge</span>
+    </div>
+    <nav class="space-y-1">
+      <a href="#" onclick="navigate('dashboard');document.getElementById('mobile-menu').classList.add('hidden')" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium">📊 Dashboard</a>
+      <a href="#" onclick="navigate('agents');document.getElementById('mobile-menu').classList.add('hidden')" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium">🤖 Agents</a>
+      <a href="#" onclick="navigate('reports');document.getElementById('mobile-menu').classList.add('hidden')" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium">📄 Reports</a>
+      <a href="#" onclick="navigate('marketplace');document.getElementById('mobile-menu').classList.add('hidden')" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium">🛒 Marketplace</a>
+      <a href="#" onclick="navigate('pricing');document.getElementById('mobile-menu').classList.add('hidden')" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium">💰 Pricing</a>
+      <a href="#" onclick="logout();document.getElementById('mobile-menu').classList.add('hidden')" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-500">🚪 Logout</a>
+    </nav>
+  </div>
+</div>
+
+<!-- Main Content -->
+<main class="md:ml-64 min-h-screen pt-16 md:pt-0">
+  <div class="p-6 md:p-8 max-w-7xl mx-auto">
+
+    <!-- Auth Pages -->
+    <div id="page-login" class="hidden-page">
+      <div class="min-h-[80vh] flex items-center justify-center">
+        <div class="w-full max-w-md animate-fade-in">
+          <div class="text-center mb-8">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4 animate-float">AF</div>
+            <h1 class="text-2xl font-bold">Welcome back</h1>
+            <p class="text-gray-500 mt-1">Sign in to your AgentForge account</p>
+          </div>
+          <form id="login-form" class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8 space-y-4 border border-gray-200 dark:border-gray-800">
+            <div>
+              <label class="block text-sm font-medium mb-1">Email</label>
+              <input type="email" id="login-email" required class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="you@company.com">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Password</label>
+              <input type="password" id="login-password" required class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="••••••••">
+            </div>
+            <button type="submit" class="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:opacity-90 transition-opacity btn-glow">Sign In</button>
+            <p class="text-center text-sm text-gray-500">No account? <a href="#" onclick="navigate('register')" class="text-blue-600 hover:underline font-medium">Register free</a></p>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-register" class="hidden-page">
+      <div class="min-h-[80vh] flex items-center justify-center">
+        <div class="w-full max-w-md animate-fade-in">
+          <div class="text-center mb-8">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4 animate-float">AF</div>
+            <h1 class="text-2xl font-bold">Create your account</h1>
+            <p class="text-gray-500 mt-1">Start monitoring competitors for free</p>
+          </div>
+          <form id="register-form" class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8 space-y-4 border border-gray-200 dark:border-gray-800">
+            <div>
+              <label class="block text-sm font-medium mb-1">Full Name</label>
+              <input type="text" id="reg-name" required class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="John Doe">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Email</label>
+              <input type="email" id="reg-email" required class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="you@company.com">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Password</label>
+              <input type="password" id="reg-password" required minlength="6" class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Min 6 characters">
+            </div>
+            <button type="submit" class="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:opacity-90 transition-opacity btn-glow">Create Account</button>
+            <p class="text-center text-sm text-gray-500">Already have an account? <a href="#" onclick="navigate('login')" class="text-blue-600 hover:underline font-medium">Sign in</a></p>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="page-dashboard" class="hidden-page">
+      <div class="mb-8 animate-fade-in">
+        <h1 class="text-3xl font-bold">Dashboard</h1>
+        <p class="text-gray-500 mt-1">Monitor your competitive landscape</p>
+      </div>
+
+      <!-- Stats -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-800 animate-fade-in" style="animation-delay:.1s">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-sm text-gray-500 font-medium">Total Agents</span>
+            <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600">🤖</div>
+          </div>
+          <div class="text-3xl font-bold" id="stat-agents">0</div>
+        </div>
+        <div class="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-800 animate-fade-in" style="animation-delay:.2s">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-sm text-gray-500 font-medium">Reports</span>
+            <div class="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center text-purple-600">📄</div>
+          </div>
+          <div class="text-3xl font-bold" id="stat-reports">0</div>
+        </div>
+        <div class="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-800 animate-fade-in" style="animation-delay:.3s">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-sm text-gray-500 font-medium">Insights</span>
+            <div class="w-10 h-10 rounded-xl bg-green-50 dark:bg-green-900/30 flex items-center justify-center text-green-600">💡</div>
+          </div>
+          <div class="text-3xl font-bold" id="stat-insights">0</div>
+        </div>
+        <div class="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-800 animate-fade-in" style="animation-delay:.4s">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-sm text-gray-500 font-medium">Competitors</span>
+            <div class="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center text-orange-600">🎯</div>
+          </div>
+          <div class="text-3xl font-bold" id="stat-competitors">0</div>
+        </div>
+      </div>
+
+      <!-- Recent Reports -->
+      <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 mb-8 animate-fade-in" style="animation-delay:.5s">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold">Recent Reports</h2>
+          <button onclick="navigate('agents')" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors btn-glow">+ New Agent</button>
+        </div>
+        <div id="dashboard-reports" class="space-y-3">
+          <p class="text-gray-400 text-center py-8">No reports yet. Create an agent to get started!</p>
+        </div>
+      </div>
+
+      <!-- Agent Performance -->
+      <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 animate-fade-in" style="animation-delay:.6s">
+        <h2 class="text-lg font-bold mb-4">Agent Performance</h2>
+        <div id="dashboard-agents" class="space-y-3">
+          <p class="text-gray-400 text-center py-8">No agents yet. Create your first agent!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Agents -->
+    <div id="page-agents" class="hidden-page">
+      <div class="flex items-center justify-between mb-8 animate-fade-in">
+        <div>
+          <h1 class="text-3xl font-bold">My Agents</h1>
+          <p class="text-gray-500 mt-1">Create and manage your AI agents</p>
+        </div>
+        <button onclick="navigate('new-agent')" class="px-5 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:opacity-90 transition-opacity btn-glow">+ New Agent</button>
+      </div>
+      <div id="agents-list" class="grid gap-4">
+        <p class="text-gray-400 text-center py-12">No agents yet. Create your first agent!</p>
+      </div>
+    </div>
+
+    <!-- New Agent -->
+    <div id="page-new-agent" class="hidden-page">
+      <div class="mb-8 animate-fade-in">
+        <button onclick="navigate('agents')" class="text-gray-500 hover:text-blue-600 text-sm mb-2">&larr; Back to Agents</button>
+        <h1 class="text-3xl font-bold">Create New Agent</h1>
+        <p class="text-gray-500 mt-1">Set up an AI agent to monitor your competitors</p>
+      </div>
+      <form id="new-agent-form" class="max-w-2xl space-y-6 animate-fade-in" style="animation-delay:.2s">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 space-y-4">
+          <h2 class="text-lg font-bold">Agent Details</h2>
+          <div>
+            <label class="block text-sm font-medium mb-1">Agent Name</label>
+            <input type="text" id="agent-name" required class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g., SaaS Competitor Tracker">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Description</label>
+            <textarea id="agent-desc" rows="3" class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="What should this agent monitor?"></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Schedule</label>
+            <select id="agent-schedule" class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none">
+              <option value="Daily">Daily</option>
+              <option value="Weekly" selected>Weekly</option>
+              <option value="Monthly">Monthly</option>
+            </select>
+          </div>
+        </div>
+        <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 space-y-4">
+          <h2 class="text-lg font-bold">Competitors to Monitor</h2>
+          <p class="text-sm text-gray-500">Add competitor websites or company names</p>
+          <div id="competitors-inputs" class="space-y-3">
+            <div class="flex gap-2">
+              <input type="text" class="competitor-input flex-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g., competitor.com or Company Name">
+              <button type="button" onclick="addCompetitorField()" class="px-4 py-3 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-xl">+</button>
+            </div>
+          </div>
+        </div>
+        <button type="submit" class="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold text-lg hover:opacity-90 transition-opacity btn-glow">Create Agent</button>
+      </form>
+    </div>
+
+    <!-- Reports -->
+    <div id="page-reports" class="hidden-page">
+      <div class="mb-8 animate-fade-in">
+        <h1 class="text-3xl font-bold">Reports</h1>
+        <p class="text-gray-500 mt-1">View all generated competitive intelligence reports</p>
+      </div>
+      <div id="reports-list" class="space-y-4">
+        <p class="text-gray-400 text-center py-12">No reports yet. Run an agent to generate your first report!</p>
+      </div>
+    </div>
+
+    <!-- Report Detail -->
+    <div id="page-report-detail" class="hidden-page">
+      <div class="mb-8 animate-fade-in">
+        <button onclick="navigate('reports')" class="text-gray-500 hover:text-blue-600 text-sm mb-2">&larr; Back to Reports</button>
+        <h1 class="text-3xl font-bold" id="report-title">Report</h1>
+        <p class="text-gray-500 mt-1" id="report-date"></p>
+      </div>
+      <div id="report-content" class="space-y-6"></div>
+    </div>
+
+    <!-- Marketplace -->
+    <div id="page-marketplace" class="hidden-page">
+      <div class="mb-8 animate-fade-in">
+        <h1 class="text-3xl font-bold">Agent Marketplace</h1>
+        <p class="text-gray-500 mt-1">Clone pre-built agents from the community</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="marketplace-list"></div>
+    </div>
+
+    <!-- Pricing -->
+    <div id="page-pricing" class="hidden-page">
+      <div class="text-center mb-12 animate-fade-in">
+        <h1 class="text-3xl font-bold">Simple Pricing</h1>
+        <p class="text-gray-500 mt-1">Start free, scale as you grow</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto animate-fade-in" style="animation-delay:.2s">
+        <!-- Free -->
+        <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-8 text-center">
+          <h3 class="text-lg font-bold mb-2">Free</h3>
+          <div class="text-4xl font-bold mb-4">$0<span class="text-lg text-gray-500">/mo</span></div>
+          <ul class="space-y-3 text-sm text-left mb-8">
+            <li class="flex items-center gap-2"><span class="text-green-500">✓</span> 1 AI Agent</li>
+            <li class="flex items-center gap-2"><span class="text-green-500">✓</span> 5 Competitors</li>
+            <li class="flex items-center gap-2"><span class="text-green-500">✓</span> Weekly Reports</li>
+            <li class="flex items-center gap-2"><span class="text-green-500">✓</span> Basic Insights</li>
+          </ul>
+          <button onclick="navigate('register')" class="w-full py-3 border-2 border-blue-600 text-blue-600 rounded-xl font-semibold hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">Get Started</button>
+        </div>
+        <!-- Pro -->
+        <div class="bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl p-8 text-white relative transform scale-105 shadow-2xl">
+          <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold">MOST POPULAR</div>
+          <h3 class="text-lg font-bold mb-2">Pro</h3>
+          <div class="text-4xl font-bold mb-4">$49<span class="text-lg opacity-80">/mo</span></div>
+          <ul class="space-y-3 text-sm text-left mb-8">
+            <li class="flex items-center gap-2"><span class="text-green-300">✓</span> 10 AI Agents</li>
+            <li class="flex items-center gap-2"><span class="text-green-300">✓</span> 50 Competitors</li>
+            <li class="flex items-center gap-2"><span class="text-green-300">✓</span> Daily Reports</li>
+            <li class="flex items-center gap-2"><span class="text-green-300">✓</span> Advanced AI Analysis</li>
+            <li class="flex items-center gap-2"><span class="text-green-300">✓</span> Priority Support</li>
+          </ul>
+          <button class="w-full py-3 bg-white text-blue-600 rounded-xl font-semibold hover:bg-gray-100 transition-colors">Upgrade to Pro</button>
+        </div>
+        <!-- Team -->
+        <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-8 text-center">
+          <h3 class="text-lg font-bold mb-2">Team</h3>
+          <div class="text-4xl font-bold mb-4">$199<span class="text-lg text-gray-500">/mo</span></div>
+          <ul class="space-y-3 text-sm text-left mb-8">
+            <li class="flex items-center gap-2"><span class="text-green-500">✓</span> Unlimited Agents</li>
+            <li class="flex items-center gap-2"><span class="text-green-500">✓</span> Unlimited Competitors</li>
+            <li class="flex items-center gap-2"><span class="text-green-500">✓</span> Real-time Reports</li>
+            <li class="flex items-center gap-2"><span class="text-green-500">✓</span> Team Collaboration</li>
+            <li class="flex items-center gap-2"><span class="text-green-500">✓</span> API Access</li>
+          </ul>
+          <button class="w-full py-3 border-2 border-blue-600 text-blue-600 rounded-xl font-semibold hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">Contact Sales</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- Theme Toggle (Desktop) -->
+<button onclick="toggleDark()" class="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center text-xl hover:scale-110 transition-transform" id="theme-toggle">
+  <span id="theme-icon">🌙</span>
+</button>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="fixed inset-0 bg-white/80 dark:bg-gray-950/80 z-50 flex items-center justify-center hidden">
+  <div class="text-center">
+    <div class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin-slow mx-auto mb-4"></div>
+    <p class="text-gray-500 font-medium" id="loading-text">Loading...</p>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+let currentUser = null;
+let currentPage = 'login';
+
+// ===== DARK MODE =====
+function initDark() {
+  const saved = localStorage.getItem('af-dark');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  if (saved === 'dark' || (!saved && prefersDark)) {
+    document.documentElement.classList.add('dark');
+    document.getElementById('theme-icon').textContent = '☀️';
+    if (document.getElementById('mobile-theme-icon')) document.getElementById('mobile-theme-icon').textContent = '☀️';
+  }
+}
+function toggleDark() {
+  document.documentElement.classList.toggle('dark');
+  const isDark = document.documentElement.classList.contains('dark');
+  localStorage.setItem('af-dark', isDark ? 'dark' : 'light');
+  document.getElementById('theme-icon').textContent = isDark ? '☀️' : '🌙';
+  if (document.getElementById('mobile-theme-icon')) document.getElementById('mobile-theme-icon').textContent = isDark ? '☀️' : '🌙';
+}
+initDark();
+
+// ===== TOAST =====
+function toast(msg, type = 'info') {
+  const colors = { success: 'bg-green-500', error: 'bg-red-500', info: 'bg-blue-500' };
+  const el = document.createElement('div');
+  el.className = `toast px-5 py-3 rounded-xl text-white font-medium shadow-lg ${colors[type] || colors.info}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// ===== LOADING =====
+function showLoading(text = 'Loading...') {
+  document.getElementById('loading-text').textContent = text;
+  document.getElementById('loading-overlay').classList.remove('hidden');
+}
+function hideLoading() {
+  document.getElementById('loading-overlay').classList.add('hidden');
+}
+
+// ===== API =====
+async function api(method, path, body = null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin' };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(path, opts);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+// ===== AUTH =====
+async function checkAuth() {
+  try {
+    const { user } = await api('GET', '/api/auth/me');
+    if (user) { currentUser = user; updateUserUI(); return true; }
+  } catch {}
+  currentUser = null;
+  return false;
+}
+
+function updateUserUI() {
+  if (!currentUser) return;
+  const initials = (currentUser.name || currentUser.email || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  document.getElementById('user-avatar').textContent = initials;
+  document.getElementById('user-name').textContent = currentUser.name || 'User';
+  document.getElementById('user-email').textContent = currentUser.email || '';
+}
+
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  try {
+    showLoading('Signing in...');
+    await api('POST', '/api/auth/login', { email: document.getElementById('login-email').value, password: document.getElementById('login-password').value });
+    await checkAuth();
+    hideLoading();
+    toast('Welcome back!', 'success');
+    navigate('dashboard');
+  } catch (err) { hideLoading(); toast(err.message, 'error'); }
+});
+
+document.getElementById('register-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  try {
+    showLoading('Creating account...');
+    await api('POST', '/api/auth/register', { name: document.getElementById('reg-name').value, email: document.getElementById('reg-email').value, password: document.getElementById('reg-password').value });
+    await checkAuth();
+    hideLoading();
+    toast('Account created!', 'success');
+    navigate('dashboard');
+  } catch (err) { hideLoading(); toast(err.message, 'error'); }
+});
+
+async function logout() {
+  await api('POST', '/api/auth/logout');
+  currentUser = null;
+  navigate('login');
+}
+
+// ===== NAVIGATION =====
+function navigate(page) {
+  currentPage = page;
+  document.querySelectorAll('[id^="page-"]').forEach(el => el.classList.add('hidden-page'));
+
+  const authPages = ['login', 'register', 'pricing', 'marketplace'];
+  if (!currentUser && !authPages.includes(page)) page = 'login';
+
+  const el = document.getElementById('page-' + page);
+  if (el) el.classList.remove('hidden-page');
+
+  // Update sidebar active
+  document.querySelectorAll('.sidebar-item').forEach(item => {
+    item.classList.toggle('active', item.dataset.page === page);
+  });
+
+  // Load data
+  if (page === 'dashboard') loadDashboard();
+  if (page === 'agents') loadAgents();
+  if (page === 'reports') loadReports();
+  if (page === 'marketplace') loadMarketplace();
+}
+
+// ===== DASHBOARD =====
+async function loadDashboard() {
+  try {
+    const [agentsData, reportsData] = await Promise.all([api('GET', '/api/agents'), api('GET', '/api/reports')]);
+    const agentsList = agentsData.agents || [];
+    const reportsList = reportsData.reports || [];
+
+    document.getElementById('stat-agents').textContent = agentsList.length;
+    document.getElementById('stat-reports').textContent = reportsList.length;
+    document.getElementById('stat-insights').textContent = agentsList.reduce((sum, a) => sum + (a.insights_count || 0), 0);
+    document.getElementById('stat-competitors').textContent = agentsList.reduce((sum, a) => sum + (a.competitors?.length || 0), 0);
+
+    const reportsEl = document.getElementById('dashboard-reports');
+    if (reportsList.length === 0) {
+      reportsEl.innerHTML = '<p class="text-gray-400 text-center py-8">No reports yet. Create an agent to get started!</p>';
+    } else {
+      reportsEl.innerHTML = reportsList.slice(0, 5).map(r => `
+        <div class="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" onclick="viewReport('${r.id}')">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center text-lg">📄</div>
+            <div>
+              <div class="font-medium text-sm">${esc(r.title)}</div>
+              <div class="text-xs text-gray-500">${timeAgo(r.created_at)}</div>
+            </div>
+          </div>
+          <span class="px-3 py-1 rounded-full text-xs font-medium ${r.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'}">${r.status}</span>
+        </div>
+      `).join('');
+    }
+
+    const agentsEl = document.getElementById('dashboard-agents');
+    if (agentsList.length === 0) {
+      agentsEl.innerHTML = '<p class="text-gray-400 text-center py-8">No agents yet. Create your first agent!</p>';
+    } else {
+      agentsEl.innerHTML = agentsList.map(a => `
+        <div class="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-lg">🤖</div>
+            <div>
+              <div class="font-medium text-sm">${esc(a.name)}</div>
+              <div class="text-xs text-gray-500">${a.competitors?.length || 0} competitors · ${a.insights_count || 0} insights</div>
+            </div>
+          </div>
+          <button onclick="runAgent('${a.id}')" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors">Run</button>
+        </div>
+      `).join('');
+    }
+  } catch {}
+}
+
+// ===== AGENTS =====
+async function loadAgents() {
+  try {
+    const { agents: list } = await api('GET', '/api/agents');
+    const el = document.getElementById('agents-list');
+    if (!list.length) { el.innerHTML = '<p class="text-gray-400 text-center py-12">No agents yet. Create your first agent!</p>'; return; }
+    el.innerHTML = list.map(a => `
+      <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 insight-card animate-fade-in">
+        <div class="flex items-start justify-between">
+          <div>
+            <h3 class="font-bold text-lg">${esc(a.name)}</h3>
+            <p class="text-sm text-gray-500 mt-1">${esc(a.description || 'No description')}</p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="runAgent('${a.id}')" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors btn-glow">▶ Run</button>
+            <button onclick="deleteAgent('${a.id}')" class="px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-xl text-sm hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors">🗑</button>
+          </div>
+        </div>
+        <div class="flex items-center gap-4 mt-4 text-sm">
+          <span class="flex items-center gap-1 text-gray-500">🎯 ${(a.competitors || []).map(c => typeof c === 'string' ? c : c.name).join(', ') || 'No competitors'}</span>
+        </div>
+        <div class="flex items-center gap-4 mt-3 text-xs text-gray-500">
+          <span>📅 ${a.schedule || 'Weekly'}</span>
+          <span>💡 ${a.insights_count || 0} insights</span>
+          <span class="px-2 py-0.5 rounded-full ${a.status === 'active' ? 'bg-green-100 text-green-600 dark:bg-green-900/30' : 'bg-gray-100 text-gray-600 dark:bg-gray-800'}">${a.status}</span>
+        </div>
+      </div>
+    `).join('');
+  } catch {}
+}
+
+async function runAgent(id) {
+  try {
+    showLoading('Running agent...');
+    const { report } = await api('POST', `/api/agents/${id}/run`);
+    hideLoading();
+    toast('Report generated!', 'success');
+    viewReport(report.id);
+  } catch (err) { hideLoading(); toast(err.message, 'error'); }
+}
+
+async function deleteAgent(id) {
+  if (!confirm('Delete this agent?')) return;
+  try {
+    await api('DELETE', `/api/agents/${id}`);
+    toast('Agent deleted', 'success');
+    loadAgents();
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+// New Agent Form
+document.getElementById('new-agent-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const competitors = [...document.querySelectorAll('.competitor-input')].map(i => i.value.trim()).filter(Boolean);
+  try {
+    showLoading('Creating agent...');
+    await api('POST', '/api/agents', {
+      name: document.getElementById('agent-name').value,
+      description: document.getElementById('agent-desc').value,
+      schedule: document.getElementById('agent-schedule').value,
+      competitors,
+    });
+    hideLoading();
+    toast('Agent created!', 'success');
+    navigate('agents');
+  } catch (err) { hideLoading(); toast(err.message, 'error'); }
+});
+
+function addCompetitorField() {
+  const container = document.getElementById('competitor-inputs');
+  const div = document.createElement('div');
+  div.className = 'flex gap-2';
+  div.innerHTML = `<input type="text" class="competitor-input flex-1 px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="competitor.com"><button type="button" onclick="this.parentElement.remove()" class="px-4 py-3 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors text-xl">×</button>`;
+  container.appendChild(div);
+}
+
+// ===== REPORTS =====
+async function loadReports() {
+  try {
+    const { reports: list } = await api('GET', '/api/reports');
+    const el = document.getElementById('reports-list');
+    if (!list.length) { el.innerHTML = '<p class="text-gray-400 text-center py-12">No reports yet. Run an agent to generate your first report!</p>'; return; }
+    el.innerHTML = list.map(r => `
+      <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 insight-card cursor-pointer animate-fade-in" onclick="viewReport('${r.id}')">
+        <div class="flex items-start justify-between">
+          <div>
+            <h3 class="font-bold">${esc(r.title)}</h3>
+            <p class="text-sm text-gray-500 mt-1">${esc(r.summary || '')}</p>
+          </div>
+          <span class="px-3 py-1 rounded-full text-xs font-medium ${r.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-yellow-100 text-yellow-700'}">${r.status}</span>
+        </div>
+        <div class="flex items-center gap-4 mt-3 text-xs text-gray-500">
+          <span>📅 ${timeAgo(r.created_at)}</span>
+          <span>💡 ${(r.insights || []).length} insights</span>
+          <span>🎯 ${(r.competitor_changes || []).length} competitor changes</span>
+        </div>
+      </div>
+    `).join('');
+  } catch {}
+}
+
+async function viewReport(id) {
+  try {
+    showLoading('Loading report...');
+    const { report } = await api('GET', `/api/reports/${id}`);
+    hideLoading();
+
+    document.getElementById('report-title').textContent = report.title;
+    document.getElementById('report-date').textContent = new Date(report.created_at).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    const content = document.getElementById('report-content');
+    content.innerHTML = `
+      <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
+        <h3 class="font-bold mb-2">Summary</h3>
+        <p class="text-gray-600 dark:text-gray-400">${esc(report.summary)}</p>
+      </div>
+      <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
+        <h3 class="font-bold mb-4">Insights (${(report.insights || []).length})</h3>
+        <div class="space-y-3">
+          ${(report.insights || []).map(i => `
+            <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border-l-4 ${i.type === 'opportunity' ? 'border-green-500' : i.type === 'threat' ? 'border-red-500' : 'border-blue-500'}">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="px-2 py-0.5 rounded-full text-xs font-medium ${i.type === 'opportunity' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : i.type === 'threat' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'}">${i.type}</span>
+                <span class="text-xs text-gray-500">Confidence: ${(i.confidence * 100).toFixed(0)}%</span>
+              </div>
+              <div class="font-medium">${esc(i.title)}</div>
+              <div class="text-sm text-gray-500 mt-1">${esc(i.description)}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
+        <h3 class="font-bold mb-4">Competitor Changes</h3>
+        <div class="space-y-3">
+          ${(report.competitor_changes || []).map(c => `
+            <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
+              <div class="font-medium mb-2">${esc(c.name)}</div>
+              ${(c.changes || []).map(ch => `
+                <div class="flex items-center gap-3 text-sm ml-4">
+                  <span class="px-2 py-0.5 rounded-full text-xs ${ch.type === 'added' ? 'bg-green-100 text-green-600' : ch.type === 'removed' ? 'bg-red-100 text-red-600' : 'bg-yellow-100 text-yellow-600'}">${ch.type}</span>
+                  <span class="text-gray-600 dark:text-gray-400">${esc(ch.field)}</span>
+                  <span class="text-xs text-gray-400">· ${ch.significance} significance</span>
+                </div>
+              `).join('')}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+
+    navigate('report-detail');
+  } catch (err) { hideLoading(); toast(err.message, 'error'); }
+}
+
+// ===== MARKETPLACE =====
+const marketplaceData = [
+  { name: 'SaaS Competitor Tracker', desc: 'Monitor top SaaS companies for pricing changes, feature launches, and hiring trends', competitors: ['stripe.com', 'shopify.com', 'salesforce.com'], template: 'competitor_intel', icon: '🚀' },
+  { name: 'E-commerce Intelligence', desc: 'Track retail giants for product launches, pricing wars, and market shifts', competitors: ['amazon.com', 'walmart.com', 'target.com'], template: 'competitor_intel', icon: '🛒' },
+  { name: 'AI Startup Watcher', desc: 'Keep tabs on the latest AI startups and their product developments', competitors: ['openai.com', 'anthropic.com', 'cohere.com'], template: 'competitor_intel', icon: '🤖' },
+  { name: 'Fintech Monitor', desc: 'Track financial technology companies for regulatory changes and product updates', competitors: ['square.com', 'paypal.com', 'plaid.com'], template: 'competitor_intel', icon: '💳' },
+  { name: 'Market Trend Analyzer', desc: 'Identify emerging market trends across industries before they go mainstream', competitors: [], template: 'trend_analysis', icon: '📈' },
+  { name: 'Talent Intelligence', desc: 'Monitor competitor hiring patterns to predict their strategic direction', competitors: [], template: 'talent_intel', icon: '👥' },
+];
+
+function loadMarketplace() {
+  document.getElementById('marketplace-list').innerHTML = marketplaceData.map(m => `
+    <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 insight-card animate-fade-in">
+      <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-2xl mb-4">${m.icon}</div>
+      <h3 class="font-bold text-lg mb-2">${m.name}</h3>
+      <p class="text-sm text-gray-500 mb-4">${m.desc}</p>
+      <div class="flex flex-wrap gap-2 mb-4">${m.competitors.map(c => `<span class="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-lg text-xs">${c}</span>`).join('')}</div>
+      <button onclick="cloneMarketplaceAgent(${JSON.stringify(m).replace(/"/g, '&quot;')})" class="w-full py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity btn-glow">Clone Agent</button>
+    </div>
+  `).join('');
+}
+
+async function cloneMarketplaceAgent(m) {
+  if (!currentUser) { navigate('login'); toast('Sign in to clone agents', 'info'); return; }
+  try {
+    showLoading('Cloning agent...');
+    await api('POST', '/api/agents', { name: m.name, description: m.desc, competitors: m.competitors, schedule: 'Weekly' });
+    hideLoading();
+    toast('Agent cloned!', 'success');
+    navigate('agents');
+  } catch (err) { hideLoading(); toast(err.message, 'error'); }
+}
+
+// ===== HELPERS =====
+function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+function timeAgo(date) {
+  const s = Math.floor((Date.now() - new Date(date)) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s / 60) + 'm ago';
+  if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+  return Math.floor(s / 86400) + 'd ago';
+}
+
+// ===== INIT =====
+(async () => {
+  const authed = await checkAuth();
+  navigate(authed ? 'dashboard' : 'login');
+})();
+</script>
+</body>
+</html>
