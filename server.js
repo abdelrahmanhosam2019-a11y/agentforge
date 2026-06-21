@@ -2,9 +2,9 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-// ===== Load .env =====
+// ===== Load .env (only for local development) =====
 const envPath = path.join(__dirname, '.env');
-if (fs.existsSync(envPath)) {
+if (fs.existsSync(envPath) && !process.env.VERCEL) {
   fs.readFileSync(envPath, 'utf8').split('\n').forEach(line => {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith('#')) return;
@@ -15,6 +15,10 @@ if (fs.existsSync(envPath)) {
     if (!process.env[key]) process.env[key] = val;
   });
 }
+
+// Debug: Log env status
+console.log('Environment:', process.env.VERCEL ? 'Vercel' : 'Local');
+console.log('SUPABASE_URL:', process.env.SUPABASE_URL ? 'SET' : 'MISSING');
 
 const PORT = 3000;
 const BASE = __dirname;

@@ -11,5 +11,11 @@
       "src": "/(.*)",
       "dest": "server.js"
     }
-  ]
+  ],
+  "env": {
+    "SUPABASE_URL": "@supabase_url",
+    "SUPABASE_PUBLISHABLE_KEY": "@supabase_publishable_key",
+    "SUPABASE_SECRET_KEY": "@supabase_secret_key",
+    "SUPABASE_JWKS_URL": "@supabase_jwks_url"
+  }
 }
